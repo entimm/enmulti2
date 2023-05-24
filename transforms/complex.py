@@ -40,7 +40,7 @@ def time_timestamp_transform(v, i, secs):
 
 
 @transformation("ReplaceChars", "replace_chars")
-def replace_chars(v, i, secs):
+def replace_chars_transform(v, i, secs):
     # 获取所有大小写字母和数字的字符串
     chars = string.ascii_lowercase + string.ascii_uppercase
     # 生成替换规则，用字典来存储
