@@ -3,7 +3,7 @@ import string
 import time
 from datetime import datetime
 
-from transforms import transformation
+from . import transformation
 
 
 @transformation("Time<->Timestamp", "time_timestamp")
