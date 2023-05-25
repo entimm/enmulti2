@@ -23,4 +23,4 @@ for _, module_name, _ in pkgutil.walk_packages([package_path]):
     module = __import__(f'{__name__}.{module_name}', fromlist=[module_name])
 
     # 可选：将导入的模块赋值给当前的命名空间，这样可以直接使用模块中的函数或变量
-    globals()[module_name] = module
+    # globals()[module_name] = module
