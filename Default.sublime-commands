@@ -2,5 +2,9 @@
 	{
 		"caption": "Enmulti: 文本转换...",
 		"command": "enmulti_select"
+	},
+	{
+		"caption": "Enmulti: 计算选区...",
+		"command": "enmulti_calc_select"
 	}
 ]

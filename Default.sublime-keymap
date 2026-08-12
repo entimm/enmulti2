@@ -1,3 +1,4 @@
 [
-	{ "keys": ["super+shift+t"], "command": "enmulti_select" }
+	{ "keys": ["super+shift+t"], "command": "enmulti_select" },
+	{ "keys": ["super+shift+c"], "command": "enmulti_calc_select" }
 ]

@@ -9,6 +9,7 @@ import sublime
 import sublime_plugin
 
 from .registry import get_discovery_log, get_transforms
+from .stats import get_stats
 
 SETTINGS_FILE = "Enmulti.sublime-settings"
 
@@ -92,3 +93,62 @@ class EnmultiApplyCommand(sublime_plugin.TextCommand):
             },
         )
         window.run_command("show_panel", {"panel": "output.enmulti_errors"})
+
+
+class EnmultiCalcSelectCommand(sublime_plugin.ApplicationCommand):
+    """弹出快速面板，选择要执行的统计方式。"""
+
+    def run(self):
+        stats = get_stats()
+        if not stats:
+            sublime.status_message("Enmulti: 没有可用的统计方式")
+            return
+        window = sublime.active_window()
+        window.show_quick_panel(
+            [s.name for s in stats],
+            lambda index: self._on_selected(window, stats, index),
+            flags=sublime.KEEP_OPEN_ON_FOCUS_LOST,
+        )
+
+    def _on_selected(self, window, stats, index):
+        if index >= 0:
+            window.run_command("enmulti_calc", {"stat_key": stats[index].key})
+
+
+class EnmultiCalcCommand(sublime_plugin.TextCommand):
+    """按指定统计方式汇总所有选区，结果输出到面板并复制到剪贴板。
+
+    不修改文档内容。
+    """
+
+    def run(self, edit, stat_key=""):
+        statistic = next(
+            (s for s in get_stats() if s.key == stat_key), None
+        )
+        if statistic is None:
+            sublime.status_message(f"Enmulti: 未知统计方式 {stat_key}")
+            return
+        regions = [r for r in self.view.sel()]
+        if not regions:
+            sublime.status_message("Enmulti: 没有选中文本")
+            return
+        selections = [self.view.substr(r) for r in regions]
+        try:
+            result = statistic.apply(selections)
+        except Exception as e:
+            sublime.status_message(f"Enmulti: 计算失败: {e}")
+            return
+        window = self.view.window()
+        panel = window.create_output_panel("enmulti_calc")
+        panel.run_command("enmulti_clear_view")
+        panel.run_command("append", {"characters": f"{result}\n"})
+        window.run_command("show_panel", {"panel": "output.enmulti_calc"})
+        sublime.set_clipboard(result)
+        sublime.status_message(f"Enmulti: {statistic.name}: {result}")
+
+
+class EnmultiClearViewCommand(sublime_plugin.TextCommand):
+    """清空视图内容（内部用于输出面板）。"""
+
+    def run(self, edit):
+        self.view.erase(edit, sublime.Region(0, self.view.size()))
