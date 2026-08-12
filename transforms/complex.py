@@ -3,11 +3,11 @@ import string
 import time
 from datetime import datetime
 
-from . import transformation
+from ..registry import transformation
 
 
 @transformation("Time<->Timestamp", "time_timestamp")
-def time_timestamp_transform(v, i, secs):
+def time_timestamp_transform(v, ctx):
     """
     实现时间字符串和时间戳之间的互转
     如果 v 是一个合法的时间字符串，将其转换成对应的时间戳字符串
@@ -27,7 +27,7 @@ def time_timestamp_transform(v, i, secs):
         else:
             dt = datetime.strptime(v, "%Y-%m-%d %H:%M:%S")
         return str(int(time.mktime(dt.timetuple())))
-    except ValueError:
+    except (ValueError, OverflowError, OSError):
         pass
 
     try:
@@ -35,23 +35,22 @@ def time_timestamp_transform(v, i, secs):
         timestamp = int(v)
         dt = datetime.fromtimestamp(timestamp)
         return dt.strftime("%Y-%m-%d %H:%M:%S")
-    except ValueError:
+    except (ValueError, OverflowError, OSError):
         return ""
 
 
 @transformation("ReplaceChars", "replace_chars")
-def replace_chars_transform(v, i, secs):
-    # 获取所有大小写字母和数字的字符串
-    chars = string.ascii_lowercase + string.ascii_uppercase
-    # 生成替换规则，用字典来存储
+def replace_chars_transform(v, ctx):
+    # 对给定字符集生成一对一的随机映射，保证不映射到自身且无碰撞
+    def shuffled_mapping(target):
+        pool = list(target)
+        random.shuffle(pool)
+        return {src: dst for src, dst in zip(target, pool) if src != dst}
+
+    # 生成小写/大写字母和数字的替换规则（保持大小写类别不变）
     replace_dict = {}
-    for char in chars:
-        if char.islower():
-            replace_char = random.choice(string.ascii_lowercase.replace(char, ''))
-        else:
-            replace_char = random.choice(string.ascii_uppercase.replace(char, ''))
-        replace_dict[char] = replace_char
-    # 生成数字替换规则，加入到替换规则字典中
-    replace_dict.update({str(i): str(random.randint(1, 9)) for i in range(10)})
+    replace_dict.update(shuffled_mapping(string.ascii_lowercase))
+    replace_dict.update(shuffled_mapping(string.ascii_uppercase))
+    replace_dict.update(shuffled_mapping(string.digits))
     # 调用translate()方法替换字符串中的字符
     return v.translate(str.maketrans(replace_dict))

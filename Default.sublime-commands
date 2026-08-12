@@ -1,6 +1,6 @@
 [
-  {
-    "caption": "uuu",
-    "command": "nice_transform_select2"
-  }
+	{
+		"caption": "Enmulti: 文本转换...",
+		"command": "enmulti_select"
+	}
 ]
